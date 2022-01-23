@@ -1,8 +1,8 @@
-import fetch from "../util/fetch-fill";
-import URI from "urijs";
+import fetch from "../util/fetch-fill"
+import URI from "urijs"
 
-// /records endpoint
-window.path = "http://localhost:3000/records";
+// records endpoint
+window.path = "http://localhost:3000/records"
 
 // max results to process
 const MAX_RESULTS = 10
@@ -52,7 +52,7 @@ const retrieve = async (options = {}) => {
   return fetch(url.toString())
     .then(response => {
       if (response.status !== 200) {
-        throw new Error("HTTP status " + response.status);
+        throw new Error("HTTP status " + response.status)
       }
       return response.json()
     })
@@ -66,8 +66,8 @@ const retrieve = async (options = {}) => {
       let allIds = []
       let openItems = []
       let closedPrimaryCount = 0
-      let previousPage = (options.page > 1) ? options.page - 1 : null;
-      let nextPage = null;
+      let previousPage = (options.page > 1) ? options.page - 1 : null
+      let nextPage = null
 
       // set nextPage
       if (MAX_RESULTS < items.length) {
@@ -117,7 +117,7 @@ const retrieve = async (options = {}) => {
       attemptsLeft--
       if (attemptsLeft) {
         //return wait(RETRY_TIMEOUT).then(() => fetch(url.toString()))
-        return new Promise((resolve) => setTimeout(resolve, RETRY_TIMEOUT));
+        return new Promise((resolve) => setTimeout(resolve, RETRY_TIMEOUT))
       }
       // or bail
       else {
@@ -128,4 +128,4 @@ const retrieve = async (options = {}) => {
 
 }
 
-export default retrieve;
+export default retrieve
