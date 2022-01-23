@@ -28,11 +28,16 @@ const retrieve = async (options = {}) => {
   }
   if (options.colors) {
     apiOptions.color = options.colors
+    // workaround: add an empty element to single-element array
+    // uri.js converts arrays to foo=bar, not foo[]=bar
+    // the express api requires an explicit array foo[]=bar
+    if (apiOptions.color.length === 1) {
+        apiOptions.color.push(null)
+    }
   }
 
   // construct url for records api
   let url = URI(window.path).search(apiOptions)
-  console.log(url.toString())
 
   // note a promise using fetch will not reject on http server errors
   return fetch(url.toString())
@@ -60,15 +65,10 @@ const retrieve = async (options = {}) => {
       if (apiOptions.page > 1) {
         start = (apiOptions.page - 1) * maxResults
       }
-      console.log('apiOptions', apiOptions)
-      console.log('start', start)
       const maxRowId = Math.min(10,items.length)
-      console.log('maxRowId', maxRowId)
-      console.log(items);
       for (let i = 0; i < maxRowId; i++) {
         // convenient shorthand
         let item = items[i]
-        //console.log(i, item) 
 
         // push id to allIDs array
         allIds.push(item.id)
