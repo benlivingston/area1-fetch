@@ -53,6 +53,13 @@ const retrieve = async (options = {}) => {
         maxResults = items.length
       }
 
+      // set nextPage
+      const currentPage = allowedOptions.page ?? 1
+      const maxPages = Math.ceil(items.length / maxResults)
+      if (currentPage < maxPages) {
+        nextPage = currentPage + 1
+      }
+
       // loop over results
       for (let i = 0; i < maxResults; i++) {
         // convenient shorthand
