@@ -12,25 +12,28 @@ const primaryColors = ['blue', 'red', 'yellow']
  * @returns Promise
  */
 const retrieve = async (options = {}) => {
-  // explicitly allow only expected parameters
-  // options.page : number
-  // options.colors : string[] 
-  const allowedOptions = { page: null, colors: []}
-  if (options.page) {
-    allowedOptions.page = options.page
-  }
-  if (options.colors) {
-    allowedOptions.colors = options.colors
-  }
-
   // max results to process
   let maxResults = 10
 
+  // explicitly allow only expected api parameters
+  //   options.page : number 
+  //     api convert to offset = (page - 1) * 10
+  //   options.colors : string[] 
+  //     api convert to singular color[]
+  const apiOptions = { offset: 0, color: []}
+  if (options.page > 1) {
+    apiOptions.offset = (options.page - 1) * maxResults
+  }
+  if (options.colors) {
+    apiOptions.color = options.colors
+  }
+
   // construct url for records api
-  let url = URI(window.path).search(allowedOptions)
+  let url = URI(window.path).search(apiOptions)
+  console.log(url.toString())
 
   // note a promise using fetch will not reject on http server errors
-  return fetch(url)
+  return fetch(url.toString())
     .then(response => response.json())
     .then(items => {
       // return object should look something like:
@@ -42,11 +45,8 @@ const retrieve = async (options = {}) => {
       let allIds = []
       let openItems = []
       let closedPrimaryCount = 0
-      let previousPage = (allowedOptions.page > 1) ? allowedOptions.page - 1 : null;
+      let previousPage = (options.page > 1) ? options.page - 1 : null;
       let nextPage = null;
-      //console.log('options', options)
-      //console.log('allowedOptions', allowedOptions)
-      //console.log('maxResults', maxResults)
 
       // sanity check maxResults
       if (items.length < maxResults) {
@@ -54,17 +54,27 @@ const retrieve = async (options = {}) => {
       }
 
       // set nextPage
-      const currentPage = allowedOptions.page ?? 1
-      const maxPages = Math.ceil(items.length / maxResults)
-      if (currentPage < maxPages) {
+      const currentPage = options.page ?? 1
+      //const maxPage = Math.ceil(items.length / maxResults)
+      //console.log(currentPage, maxPage, apiOptions.offset)
+      //if (currentPage < maxPage) {
         nextPage = currentPage + 1
-      }
+      //}
 
       // loop over results
-      for (let i = 0; i < maxResults; i++) {
+      let start = 0
+      if (apiOptions.page > 1) {
+        start = (apiOptions.page - 1) * maxResults
+      }
+      console.log('apiOptions', apiOptions)
+      console.log('start', start)
+      const maxRowId = start + maxResults
+      console.log('maxRowId', maxRowId)
+      console.log(items);
+      for (let i = start; i < maxRowId; i++) {
         // convenient shorthand
         let item = items[i]
-        console.log(i, item) 
+        //console.log(i, item) 
 
         // push id to allIDs array
         allIds.push(item.id)
