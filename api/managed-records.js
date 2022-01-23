@@ -4,6 +4,10 @@ import URI from "urijs";
 // /records endpoint
 window.path = "http://localhost:3000/records";
 
+// max results to process
+const maxResults = 10
+
+// primary colors
 const primaryColors = ['blue', 'red', 'yellow']
 
 /**
@@ -12,8 +16,6 @@ const primaryColors = ['blue', 'red', 'yellow']
  * @returns Promise
  */
 const retrieve = async (options = {}) => {
-  // max results to process
-  let maxResults = 10
 
   // explicitly allow only expected api parameters
   //   options.page : number 
@@ -48,18 +50,10 @@ const retrieve = async (options = {}) => {
       let previousPage = (options.page > 1) ? options.page - 1 : null;
       let nextPage = null;
 
-      // sanity check maxResults
-      if (items.length < maxResults) {
-        maxResults = items.length
-      }
-
       // set nextPage
-      const currentPage = options.page ?? 1
-      //const maxPage = Math.ceil(items.length / maxResults)
-      //console.log(currentPage, maxPage, apiOptions.offset)
-      //if (currentPage < maxPage) {
-        nextPage = currentPage + 1
-      //}
+      if (maxResults < items.length) {
+        nextPage = (options.page ?? 1) + 1
+      }
 
       // loop over results
       let start = 0
@@ -68,10 +62,10 @@ const retrieve = async (options = {}) => {
       }
       console.log('apiOptions', apiOptions)
       console.log('start', start)
-      const maxRowId = start + maxResults
+      const maxRowId = Math.min(10,items.length)
       console.log('maxRowId', maxRowId)
       console.log(items);
-      for (let i = start; i < maxRowId; i++) {
+      for (let i = 0; i < maxRowId; i++) {
         // convenient shorthand
         let item = items[i]
         //console.log(i, item) 
