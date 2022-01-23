@@ -116,7 +116,6 @@ const retrieve = async (options = {}) => {
       // try again if allowed
       attemptsLeft--
       if (attemptsLeft) {
-        //return wait(RETRY_TIMEOUT).then(() => fetch(url.toString()))
         return new Promise((resolve) => setTimeout(resolve, RETRY_TIMEOUT))
       }
       // or bail
