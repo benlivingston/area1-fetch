@@ -5,10 +5,16 @@ import URI from "urijs";
 window.path = "http://localhost:3000/records";
 
 // max results to process
-const maxResults = 10
+const MAX_RESULTS = 10
+
+// max retry attempts on failure
+const MAX_RETRIES = 3
+
+// retry timeout in ms
+const RETRY_TIMEOUT = 2000
 
 // primary colors
-const primaryColors = ['blue', 'red', 'yellow']
+const PRIMARY_COLORS = ['blue', 'red', 'yellow']
 
 /**
  * 
@@ -24,7 +30,7 @@ const retrieve = async (options = {}) => {
   //     api convert to singular color[]
   const apiOptions = { offset: 0, color: []}
   if (options.page > 1) {
-    apiOptions.offset = (options.page - 1) * maxResults
+    apiOptions.offset = (options.page - 1) * MAX_RESULTS
   }
   if (options.colors) {
     apiOptions.color = options.colors
@@ -39,9 +45,17 @@ const retrieve = async (options = {}) => {
   // construct url for records api
   let url = URI(window.path).search(apiOptions)
 
+  // number of network attempts remaining
+  let attemptsLeft = MAX_RETRIES
+
   // note a promise using fetch will not reject on http server errors
   return fetch(url.toString())
-    .then(response => response.json())
+    .then(response => {
+      if (response.status !== 200) {
+        throw new Error("HTTP status " + response.status);
+      }
+      return response.json()
+    })
     .then(items => {
       // return object should look something like:
       //   ids : number[]
@@ -56,14 +70,14 @@ const retrieve = async (options = {}) => {
       let nextPage = null;
 
       // set nextPage
-      if (maxResults < items.length) {
+      if (MAX_RESULTS < items.length) {
         nextPage = (options.page ?? 1) + 1
       }
 
       // loop over results
       let start = 0
       if (apiOptions.page > 1) {
-        start = (apiOptions.page - 1) * maxResults
+        start = (apiOptions.page - 1) * MAX_RESULTS
       }
       const maxRowId = Math.min(10,items.length)
       for (let i = 0; i < maxRowId; i++) {
@@ -74,7 +88,7 @@ const retrieve = async (options = {}) => {
         allIds.push(item.id)
 
         // primary color?
-        item.isPrimary = (primaryColors.indexOf(item.color) !== -1)
+        item.isPrimary = (PRIMARY_COLORS.indexOf(item.color) !== -1)
 
         // check if the record is closed and a primary color
         if (item.disposition === 'closed' && item.isPrimary) {
@@ -94,11 +108,24 @@ const retrieve = async (options = {}) => {
         'nextPage': nextPage
       }
     })
+    .catch(error => {
+      // output the error
+      console.log(error)
 
-}
+      // inspired by https://stackoverflow.com/questions/46175660/fetch-retry-request-on-failure
+      // try again if allowed
+      attemptsLeft--
+      if (attemptsLeft) {
+        //return wait(RETRY_TIMEOUT).then(() => fetch(url.toString()))
+        return new Promise((resolve) => setTimeout(resolve, RETRY_TIMEOUT));
+      }
+      // or bail
+      else {
+        throw error
+      }
 
-function isPrimaryColor(c) {
-    
+    })
+
 }
 
 export default retrieve;
